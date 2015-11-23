@@ -39,11 +39,10 @@ public class GUI {
 						String fn = file.getName().toLowerCase();
 						if (fn.endsWith(".wav")) {
 							encode(file, f);
-							// info(null, "OK:" + file.getName() +
-							// ".neoe.opus");
+							info(f, "OK:" + file.getName() + ".neoe.opus");
 						} else if (fn.endsWith(".neoe.opus")) {
 							play(file, f);
-							// info(null, "Playing:" + file.getName());
+							info(f, "Played:" + file.getName());
 						} else {
 							info(f, "Only accept '.wav' or '.neoe.opus' files");
 						}
