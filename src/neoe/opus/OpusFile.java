@@ -68,6 +68,11 @@ public class OpusFile {
 		byte[] header = new byte[HEAD_LEN];
 		in.read(header);
 		parseHeader(header);
+		
+		if (!format.equals(OPUS)){
+			in.close();
+			throw new RuntimeException("not a neoe/opus file:"+fn);
+		}
 		// data = new byte[len - HEAD_LEN];
 		// int len2 = in.read(data);
 		in.close();
