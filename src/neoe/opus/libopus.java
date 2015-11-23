@@ -17,7 +17,6 @@ public class libopus {
 		Native.register(Platform.isWindows() ? "libopus-0" : "libopus-0");
 	}
 
-
 	public static native String opus_get_version_string();
 
 	public static native int opus_encoder_get_size(int ch);
@@ -117,14 +116,13 @@ public class libopus {
 		this(1, OPUS_APPLICATION_VOIP, opusFramesizeInMs60, rate48k);
 	}
 
-	public libopus(int channels, int OPUS_APPLICATION, int opusFramesizeInMs, int sampleRate) {
+	public libopus(int channels, int OPUS_APPLICATION, int opusFramesizeInMs,
+			int sampleRate) {
 		this.OPUS_APPLICATION = OPUS_APPLICATION;
 		this.channels = channels;
 		this.opusFramesizeInMs = opusFramesizeInMs;
 		this.sampleRate = sampleRate;
 		say("opus_get_version_string=" + libopus.opus_get_version_string());
-		// int size = libopus.opus_encoder_get_size(channels);
-		// say("size(1)=" + size);
 		frame_size = sampleRate * opusFramesizeInMs / 1000;
 		say("opus_framesize=" + frame_size);
 	}
@@ -132,8 +130,8 @@ public class libopus {
 	void openEnc() {
 
 		IntByReference err = new IntByReference();
-		enc = libopus.opus_encoder_create(sampleRate, channels, OPUS_APPLICATION,
-				err);
+		enc = libopus.opus_encoder_create(sampleRate, channels,
+				OPUS_APPLICATION, err);
 		if (err.getValue() != 0) {
 			say("openEnc,err=" + err.getValue());
 		} else {
@@ -180,11 +178,26 @@ public class libopus {
 	}
 
 	public int decode(byte[] data, int len, byte[] out, boolean lost_prev) {
-		//System.out.println("decode,len="+len+",framesize="+frame_size);
+		// System.out.println("decode,len="+len+",framesize="+frame_size);
 		return channels
 				* 2
 				* opus_decode(dec, data, len, out, frame_size, lost_prev ? 1
 						: 0);
+	}
+
+	public static int getOpusSampleRate(int rate) {
+		int coding_rate;
+		if (rate > 24000)
+			coding_rate = 48000;
+		else if (rate > 16000)
+			coding_rate = 24000;
+		else if (rate > 12000)
+			coding_rate = 16000;
+		else if (rate > 8000)
+			coding_rate = 12000;
+		else
+			coding_rate = 8000;
+		return coding_rate;
 	}
 
 	public static int getOpusFrameBytes(int sampleRate, int channels,

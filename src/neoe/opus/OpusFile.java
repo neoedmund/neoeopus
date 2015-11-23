@@ -23,12 +23,17 @@ public class OpusFile {
 	public int unitPCMByte;
 	public int unitCnt;
 	public String format;
-	static final int HEAD_LEN = 28;
+	// private int opusSampleRate;
+	static final int HEAD_LEN = 48;
 
 	public static final byte VER = 1;
 	public static final String OPUS = "OPUS";
 
-	/** for read header */
+	/**
+	 * for read header
+	 * 
+	 */
+
 	public OpusFile() {
 	}
 
@@ -48,8 +53,7 @@ public class OpusFile {
 		this.sampleRate = sampleRate;
 		this.channels = channels;
 		this.unitMs = unitMs;
-		this.unitPCMByte = sampleRate * channels * (BPP / 8) * unitMs / 1000;
-		System.out.println("unitPCMByte=" + unitPCMByte);
+
 		this.ba = new ByteArrayOutputStream();
 	}
 
@@ -68,10 +72,10 @@ public class OpusFile {
 		byte[] header = new byte[HEAD_LEN];
 		in.read(header);
 		parseHeader(header);
-		
-		if (!format.equals(OPUS)){
+
+		if (!format.equals(OPUS)) {
 			in.close();
-			throw new RuntimeException("not a neoe/opus file:"+fn);
+			throw new RuntimeException("not a neoe/opus file:" + fn);
 		}
 		// data = new byte[len - HEAD_LEN];
 		// int len2 = in.read(data);
@@ -89,14 +93,18 @@ public class OpusFile {
 		maxUnitByte = toIntLE(header, 16);
 		unitMs = toIntLE(header, 20);
 		unitCnt = toIntLE(header, 24);
-		unitPCMByte = sampleRate * channels * (BPP / 8) * unitMs / 1000;
+
+		int opusSampleRate = libopus.getOpusSampleRate(sampleRate);
+		unitPCMByte = opusSampleRate * channels * (BPP / 8) * unitMs / 1000;
+
+		// sampleRatePCM = toIntLE(header, 28);
 		int byteRate = sampleRate * channels * BPP / 8;
 		System.out.printf("%s,ver:%d,channels:%d,SampleRate:%d,BPP:%d,"
 				+ "AudioLenBytes:%d, byteRate=%d,\n maxUnitByte=%d,"
-				+ "unitMs=%d,unitCnt=%d,unitPCMByte=%d, len=%.1f sec\n",
+				+ "unitMs=%d,unitCnt=%d, len=%.1f sec, unitPCMByte=%d\n",
 				format, ver, channels, sampleRate, BPP, totalAudioLen,
-				byteRate, maxUnitByte, unitMs, unitCnt, unitPCMByte, unitMs
-						* unitCnt / 1000.0);
+				byteRate, maxUnitByte, unitMs, unitCnt, unitMs
+						* unitCnt / 1000.0, unitPCMByte);
 	}
 
 	private static int toIntLE(byte[] b, int p) {
@@ -112,8 +120,7 @@ public class OpusFile {
 		byte[] header = new byte[HEAD_LEN];
 		int totalAudioLen = ba.size();
 
- 
-		header[0] = 'O';  
+		header[0] = 'O';
 		header[1] = 'P';
 		header[2] = 'U';
 		header[3] = 'S';
@@ -141,7 +148,11 @@ public class OpusFile {
 		header[25] = (byte) ((unitCnt >> 8) & 0xff);
 		header[26] = (byte) ((unitCnt >> 16) & 0xff);
 		header[27] = (byte) ((unitCnt >> 24) & 0xff);
-		//assert HEAD_LEN == 28;
+		// header[28] = (byte) (sampleRatePCM & 0xff);
+		// header[29] = (byte) ((sampleRatePCM >> 8) & 0xff);
+		// header[30] = (byte) ((sampleRatePCM >> 16) & 0xff);
+		// header[31] = (byte) ((sampleRatePCM >> 24) & 0xff);
+		// assert HEAD_LEN == 28;
 		OutputStream out = new FileOutputStream(fn);
 		out.write(header, 0, HEAD_LEN);
 		ba.writeTo(out);

@@ -12,9 +12,9 @@ public class OpusPlayer {
 
 	public SourceDataLine sourceLine;
 	private String fn;
-	private int sampleRate;
 	boolean ok = true;
 	OpusFile of;
+	private int opusSampleRate;
 
 	public OpusPlayer(String fn) throws Exception {
 		this.fn = fn;
@@ -28,10 +28,10 @@ public class OpusPlayer {
 			System.out.println("Warn:Opusfile ver not support! need:"
 					+ OpusFile.VER + ", but got:" + of.ver);
 		}
-		this.sampleRate = of.sampleRate;
-		int byteRate = sampleRate * of.channels * 2;
+		this.opusSampleRate = libopus.getOpusSampleRate(of.sampleRate);
+		int byteRate = of.sampleRate * of.channels * 2;
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class,
-				Audio.getFormat(sampleRate, of.channels, byteRate));		
+				Audio.getFormat(of.sampleRate, of.channels, byteRate));		
 		System.out.println(info);
 		sourceLine = (SourceDataLine) AudioSystem.getLine(info);
 		sourceLine.open();
@@ -47,10 +47,11 @@ public class OpusPlayer {
 		InputStream in = new FileInputStream(fn);
 		in.skip(OpusFile.HEAD_LEN);
 		int cnt = 0;
+
 		byte[] outBuf = new byte[of.unitPCMByte];
 		byte[] inBuf = new byte[of.maxUnitByte];
 		libopus opus = new libopus(of.channels, libopus.OPUS_APPLICATION_AUDIO,
-				of.unitMs, of.sampleRate);
+				of.unitMs, opusSampleRate);
 		opus.openDec();
 		while (true) {
 			int v1 = in.read();

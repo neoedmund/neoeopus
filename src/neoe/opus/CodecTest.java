@@ -26,23 +26,23 @@ public class CodecTest {
 		int app = wav.channels > 1 ? libopus.OPUS_APPLICATION_AUDIO : libopus.OPUS_APPLICATION_VOIP;
 		int opusFramesizeInMs = wav.channels > 1 ? libopus.opusFramesizeInMs60 : libopus.opusFramesizeInMs60;
 
-		// int rate = libopus.rate48k;
-		int bufSize = libopus.getOpusFrameBytes(wav.sampleRate, wav.channels, opusFramesizeInMs);
+		int opusSampleRate = libopus.getOpusSampleRate(wav.sampleRate);
+		int bufSize = libopus.getOpusFrameBytes(opusSampleRate, wav.channels, opusFramesizeInMs);
 
 		System.out.println("opus input buf size=" + bufSize);
 		byte[] pcmData = new byte[bufSize];
 		byte[] pcmData2 = new byte[bufSize];
 		byte[] opusData = new byte[bufSize];
-		// String fn2 = new File(fn).getAbsolutePath() + ".re.wav";
+		String fn2 = new File(fn).getAbsolutePath() + ".re.wav";
 		String fno = new File(fn).getAbsolutePath() + ".neoe.opus";
-		// WavFile wav2 = new WavFile(fn2, wav.sampleRate, wav.channels);
+		WavFile wav2 = new WavFile(fn2, wav.sampleRate, wav.channels);
 		OpusFile of = new OpusFile(fno, wav.sampleRate, wav.channels, opusFramesizeInMs);
 		int inlen;
 		int cnt = 0;
 
 		libopus opus;
 
-		opus = new libopus(wav.channels, app, opusFramesizeInMs, wav.sampleRate);
+		opus = new libopus(wav.channels, app, opusFramesizeInMs, opusSampleRate);
 		opus.openDec();
 		opus.openEnc();
 		while (true) {
@@ -57,7 +57,7 @@ public class CodecTest {
 				if (cnt < 10)
 					System.out.printf("%d->%d->%d\n", pcmData.length, encoded, decoded);
 				of.write(opusData, encoded);
-				// wav2.write(pcmData2, decoded);
+				wav2.write(pcmData2, decoded);
 
 				cnt++;
 			} catch (Throwable e) {
@@ -69,9 +69,9 @@ public class CodecTest {
 		say(String.format("voice %d sectors", cnt));
 		opus.closeEnc();
 		opus.closeDec();
-		// wav2.close();
+		wav2.close();
 		of.close();
-		// new WavFile().parseHeader(fn2);
+		new WavFile().parseHeader(fn2);
 		new OpusFile().parseHeader(fno);
 	}
 
